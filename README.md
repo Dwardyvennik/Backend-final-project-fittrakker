@@ -1,74 +1,70 @@
-# FitTrack --- Backend API (Assignment 3 Part 1)
+# FitTrack — Full-Stack Fitness Tracker (Assignment 3 Parts 1 & 2)
 
-FitTrack is a fitness tracking web application backend built with
-**Node.js**, **Express.js**, and **MongoDB (Native Driver)**.\
-This assignment focuses on building a RESTful API with full **CRUD
-operations**, database integration, and advanced query features such as
-filtering, sorting, and projection.
+[cite_start]FitTrack is a fitness tracking web application built with **Node.js**, **Express.js**, and **MongoDB (Native Driver)**[cite: 1, 15]. 
+[cite_start]This project demonstrates a full-stack production application with a RESTful API and a dynamic web interface capable of full CRUD operations[cite: 6, 12, 13].
 
 ------------------------------------------------------------------------
 
-## Assignment Goal
-
-The main goal of **Assignment 3 -- Part 1** is to:
-
--   Design and implement a backend API using Express.js\
--   Connect the application to MongoDB using the native driver\
--   Implement full CRUD operations\
--   Use MongoDB ObjectId correctly\
--   Apply filtering, sorting, and projection\
--   Handle validation and HTTP status codes
+## Deployed URL
+[cite_start]**Public URL:** [text](https://backend-final-project-fittrakker.onrender.com/) [cite: 21, 57]
 
 ------------------------------------------------------------------------
 
-## Project Topic
+## Assignment Goals
 
-**Fitness Tracking System (FitTrack)**
+### Part 1: Backend API
+- [cite_start]Design and implement a backend API using Express.js [cite: 3]
+- [cite_start]Connect to MongoDB using the native driver [cite: 3]
+- [cite_start]Implement full CRUD operations and handle HTTP status codes [cite: 3]
+- [cite_start]Apply filtering, sorting, and projection [cite: 3]
 
-The system allows users to store workout data, track training sessions,
-and manage fitness progress using a REST API.
+### Part 2: Deployment & Production
+- [cite_start]Deploy the application to a public production environment [cite: 4, 19]
+- [cite_start]Configure environment variables (`PORT`, `MONGO_URI`) for production [cite: 7, 26]
+- [cite_start]Connect the frontend UI to the backend API via `fetch()` [cite: 5, 48]
+- [cite_start]Demonstrate full CRUD functionality through the web interface [cite: 6, 59]
 
 ------------------------------------------------------------------------
 
 ## Team Members
 
--   Almasuly Damir --- Group SE-2429\
--   Amir Berdibek --- Group SE-2429\
--   Qosaman Zarina --- Group SE-2429\
--   Alikhan Korazbay --- Group SE-2429\
--   Sharshiken Ali --- Group SE-2429
+- Almasuly Damir — Group SE-2429
+- Amir Berdibek — Group SE-2429
+- Qosaman Zarina — Group SE-2429
+- Alikhan Korazbay — Group SE-2429
+- Sharshiken Ali — Group SE-2429
 
 ------------------------------------------------------------------------
 
 ## Technologies Used
 
--   Node.js\
--   Express.js\
--   MongoDB (Native Node.js Driver)\
--   HTML5\
--   CSS3
+- [cite_start]**Node.js & Express.js** [cite: 15]
+- [cite_start]**MongoDB** (Native Node.js Driver) 
+- [cite_start]**Dotenv** (Environment Variable Management) [cite: 30]
+- [cite_start]**HTML5, CSS3, JavaScript** (Fetch API) [cite: 46, 48]
 
 ------------------------------------------------------------------------
 
 ## Project Structure
 
-    project-root/
-    ├── database/
-    │   └── mongo.js
-    ├── routes/
-    │   └── workouts.js
-    ├── public/
-    │   └── styles.css
-    ├── views/
-    │   ├── index.html
-    │   ├── about.html
-    │   ├── contact.html
-    │   ├── success.html
-    │   └── 404.html
-    ├── server.js
-    ├── package.json
-    └── README.md
-
+```text
+project-root/
+├── database/
+│   └── mongo.js        # MongoDB connection logic (Production ready) [cite: 13, 24]
+├── routes/
+│   └── workouts.js      # API routes for CRUD operations [cite: 13]
+├── public/
+│   └── styles.css       # Global styling
+├── views/
+│   ├── index.html       # Root interface (accessible via /) [cite: 58]
+│   ├── workouts.html    # Main CRUD UI (Table/Catalog) [cite: 36, 38]
+│   ├── about.html
+│   ├── contact.html
+│   └── 404.html         # Custom 404 handler [cite: 22]
+├── server.js            # Entry point (uses process.env.PORT) [cite: 13, 23]
+├── .gitignore           # Excludes node_modules and .env [cite: 53]
+├── package.json
+└── README.md
 ------------------------------------------------------------------------
 
 ## Installation & Run Instructions

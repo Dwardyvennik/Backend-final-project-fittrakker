@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Workouts — FitTrack</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="nav-container">
+    <div class="logo">FitTrack</div>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/workouts">Workouts</a></li>
+    </ul>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>Workout Manager</h1>
+    <p>Create, filter and manage workouts in real time</p>
+  </div>
+</section>
+
+<main class="main-content">
+
+<section class="section">
+
+  <h2>Create Workout</h2>
+
+  <input type="text" id="titleInput" placeholder="Workout title">
+  <br><br>
+
+  <select id="typeInput">
+    <option value="strength">Strength</option>
+    <option value="stamina">Stamina</option>
+    <option value="yoga">Yoga</option>
+  </select>
+
+  <br><br>
+
+  <input type="number" id="durationInput" placeholder="Duration (minutes)">
+  <br><br>
+
+  <input type="number" id="caloriesInput" placeholder="Calories burned">
+  <br><br>
+
+  <button onclick="createWorkout()">Add Workout</button>
+
+</section>
+
+
+<section class="section">
+
+  <h2>Filters</h2>
+
+  <label>
+    Type:
+    <select id="typeFilter">
+      <option value="">All</option>
+      <option value="strength">Strength</option>
+      <option value="stamina">Stamina</option>
+      <option value="yoga">Yoga</option>
+    </select>
+  </label>
+
+  <br><br>
+
+  <label>
+    Sort by:
+    <select id="sortSelect">
+      <option value="">None</option>
+      <option value="duration">Duration</option>
+      <option value="calories">Calories</option>
+    </select>
+  </label>
+
+  <br><br>
+
+  <label>
+    Projection:
+    <input type="checkbox" id="projectionCheck">
+    Show only title and duration
+  </label>
+
+  <br><br>
+
+  <button onclick="loadWorkouts()">Apply Filters</button>
+
+</section>
+
+
+<section class="section">
+
+  <h2>Workouts Data</h2>
+  <div id="workoutsList"></div>
+
+</section>
+
+</main>
+
+<footer class="footer">
+  © 2025 FitTrack
+</footer>
+
+<script>
+
+async function createWorkout() {
+
+  const title = document.getElementById("titleInput").value;
+  const type = document.getElementById("typeInput").value;
+  const duration = document.getElementById("durationInput").value;
+  const calories = document.getElementById("caloriesInput").value;
+
+  if (!title || !duration) {
+    alert("Title and duration are required");
+    return;
+  }
+
+  await fetch("/api/workouts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      title,
+      type,
+      duration: Number(duration),
+      calories: Number(calories)
+    })
+  });
+
+  document.getElementById("titleInput").value = "";
+  document.getElementById("durationInput").value = "";
+  document.getElementById("caloriesInput").value = "";
+
+  loadWorkouts();
+}
+
+
+async function deleteWorkout(id) {
+
+  const confirmDelete = confirm("Delete this workout?");
+
+  if (!confirmDelete) return;
+
+  await fetch(`/api/workouts/${id}`, {
+    method: "DELETE"
+  });
+
+  loadWorkouts();
+}
+
+
+async function loadWorkouts() {
+
+  const params = new URLSearchParams(window.location.search);
+
+  const type = params.get("type") || document.getElementById("typeFilter").value;
+  const sort = params.get("sort") || document.getElementById("sortSelect").value;
+  const projectionParam = params.get("fields");
+
+  const projection = projectionParam === "title,duration" || document.getElementById("projectionCheck").checked;
+
+  if (type) document.getElementById("typeFilter").value = type;
+  if (sort) document.getElementById("sortSelect").value = sort;
+  if (projection) document.getElementById("projectionCheck").checked = true;
+
+  let url = "/api/workouts?";
+
+  if (type) url += `type=${type}&`;
+  if (sort) url += `sort=${sort}&`;
+  if (projection) url += "fields=title,duration";
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const container = document.getElementById("workoutsList");
+  container.innerHTML = "";
+
+  if (data.length === 0) {
+    container.innerHTML = "<p>No workouts found.</p>";
+    return;
+  }
+
+  data.forEach(workout => {
+
+    const div = document.createElement("div");
+    div.style.marginBottom = "20px";
+    div.style.paddingBottom = "10px";
+    div.style.borderBottom = "1px solid #ddd";
+
+    div.innerHTML = `
+      <strong>${workout.title}</strong><br>
+      Type: ${workout.type || "-"}<br>
+      Duration: ${workout.duration || "-"} min<br>
+      Calories: ${workout.calories || "-"}<br>
+      <button onclick="deleteWorkout('${workout._id}')">Delete</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+loadWorkouts();
+
+</script>
+
+</body>
+</html>

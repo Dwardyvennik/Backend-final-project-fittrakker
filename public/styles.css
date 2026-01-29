@@ -157,4 +157,176 @@ body {
 .back-home:hover {
     text-decoration: underline;
 }
+/* ---------- FORMS UI ---------- */
+
+input, select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
+  outline: none;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+input:focus,
+select:focus {
+  border-color: #38bdf8;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+/* Buttons */
+
+button {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* Section titles spacing */
+
+.section h2 {
+  margin-bottom: 25px;
+}
+
+/* Workout cards */
+
+#workoutsList div {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+#workoutsList div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Card text */
+
+#workoutsList h3 {
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+#workoutsList p {
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+/* Delete button style */
+
+#workoutsList button {
+  background: #ef4444;
+  margin-top: 10px;
+}
+
+#workoutsList button:hover {
+  background: #dc2626;
+}
+
+/* Checkbox alignment */
+
+.section label {
+  font-size: 14px;
+  color: #334155;
+}
+
+/* Mobile fixes */
+
+@media (max-width: 600px) {
+
+  button {
+    width: 100%;
+  }
+
+  input, select {
+    font-size: 14px;
+  }
+
+}
+/* ---------- DASHBOARD LAYOUT ---------- */
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 25px;
+  align-items: flex-start;
+}
+
+/* Sidebar */
+
+.dashboard-sidebar {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 100px;
+}
+
+.dashboard-sidebar h3 {
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.info-card {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #475569;
+}
+
+/* Content */
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Active nav link */
+
+.active-link {
+  color: #38bdf8 !important;
+  font-weight: 600;
+}
+
+/* Mobile layout */
+
+@media (max-width: 900px) {
+
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: relative;
+    top: 0;
+  }
+
+}
+
 

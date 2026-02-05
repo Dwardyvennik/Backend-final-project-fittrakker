@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register — FitTrack</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="nav-container">
+    <div class="logo">FitTrack</div>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/login">Login</a></li>
+    </ul>
+  </div>
+</header>
+
+<main class="main-content">
+  <section class="section" style="max-width: 500px; margin: 0 auto;">
+    <h2>Register</h2>
+    <div class="form-grid">
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+    </div>
+    <br>
+    <button onclick="register()">Register</button>
+    <p id="error-msg" style="color: red; margin-top: 10px; display: none;"></p>
+  </section>
+</main>
+
+<script>
+  async function register() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const errorMsg = document.getElementById("error-msg");
+
+    if (!username || !password) {
+      errorMsg.textContent = "Please enter username and password.";
+      errorMsg.style.display = "block";
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Registration successful! Please login.");
+        window.location.href = "/login";
+      } else {
+        errorMsg.textContent = data.error || "Registration failed";
+        errorMsg.style.display = "block";
+      }
+    } catch (err) {
+      errorMsg.textContent = "Something went wrong.";
+      errorMsg.style.display = "block";
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -10,10 +10,12 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.set("trust proxy", 1);ьг
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 
 // Session Configuration
 app.use(session({

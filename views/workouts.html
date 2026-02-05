@@ -12,7 +12,7 @@
 
     <div class="logo">FitTrack</div>
 
-    <ul class="nav-links">
+    <ul class="nav-links" id="nav-links">
       <li><a href="/">Dashboard</a></li>
       <li><a href="/workouts" class="active-link">Workouts</a></li>
       <li><a href="/about">About</a></li>
@@ -59,8 +59,8 @@
     <!-- CONTENT -->
     <div class="dashboard-content">
 
-      <!-- CREATE -->
-      <section class="section">
+      <!-- CREATE (Protected) -->
+      <section class="section" id="create-section" style="display: none;">
 
         <h2>Create New Workout</h2>
 
@@ -78,11 +78,23 @@
 
           <input type="number" id="caloriesInput" placeholder="Calories">
 
+          <select id="difficultyInput">
+            <option value="Easy">Easy</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+
+          <input type="text" id="notesInput" placeholder="Notes (optional)">
+
         </div>
 
         <button onclick="createWorkout()">Add Workout</button>
 
       </section>
+
+      <div id="login-prompt" style="display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+        <p>Please <a href="/login" style="color: #38bdf8;">Login</a> to create or manage workouts.</p>
+      </div>
 
 
       <!-- FILTERS -->
@@ -140,6 +152,42 @@
 
 <script>
 
+let isAuthenticated = false;
+
+// Check Auth on Load
+async function checkAuth() {
+  try {
+    const res = await fetch("/api/auth/status");
+    const data = await res.json();
+    isAuthenticated = data.isAuthenticated;
+    const nav = document.getElementById("nav-links");
+
+    if (isAuthenticated) {
+      document.getElementById("create-section").style.display = "block";
+      document.getElementById("login-prompt").style.display = "none";
+      
+      const logoutLi = document.createElement("li");
+      logoutLi.innerHTML = '<a href="#" onclick="logout()">Logout</a>';
+      nav.appendChild(logoutLi);
+    } else {
+      document.getElementById("create-section").style.display = "none";
+      document.getElementById("login-prompt").style.display = "block";
+
+      const loginLi = document.createElement("li");
+      loginLi.innerHTML = '<a href="/login">Login</a>';
+      nav.appendChild(loginLi);
+    }
+  } catch (e) {
+    console.error("Auth check failed", e);
+  }
+  loadWorkouts();
+}
+
+async function logout() {
+  await fetch("/api/auth/logout", { method: "POST" });
+  window.location.reload();
+}
+
 // CREATE
 async function createWorkout() {
 
@@ -147,28 +195,42 @@ async function createWorkout() {
   const type = typeInput.value;
   const duration = durationInput.value;
   const calories = caloriesInput.value;
+  const difficulty = difficultyInput.value;
+  const notes = notesInput.value;
 
   if (!title || !duration) {
     alert("Title and duration are required");
     return;
   }
 
-  await fetch("/api/workouts", {
+  const res = await fetch("/api/workouts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       title,
       type,
       duration: Number(duration),
-      calories: Number(calories)
+      calories: Number(calories),
+      difficulty,
+      notes
     })
   });
 
-  titleInput.value = "";
-  durationInput.value = "";
-  caloriesInput.value = "";
+  if (res.status === 401) {
+    alert("Unauthorized. Please login.");
+    window.location.href = "/login";
+    return;
+  }
 
-  loadWorkouts();
+  if (res.ok) {
+    titleInput.value = "";
+    durationInput.value = "";
+    caloriesInput.value = "";
+    notesInput.value = "";
+    loadWorkouts();
+  } else {
+    alert("Error creating workout");
+  }
 }
 
 
@@ -177,9 +239,14 @@ async function deleteWorkout(id) {
 
   if (!confirm("Delete this workout?")) return;
 
-  await fetch(`/api/workouts/${id}`, {
+  const res = await fetch(`/api/workouts/${id}`, {
     method: "DELETE"
   });
+
+  if (res.status === 401) {
+    alert("Unauthorized. Please login.");
+    return;
+  }
 
   loadWorkouts();
 }
@@ -214,20 +281,24 @@ async function loadWorkouts() {
     const card = document.createElement("div");
     card.className = "workout-card";
 
-    card.innerHTML = `
-      <h3>${workout.title}</h3>
-      <p><strong>Type:</strong> ${workout.type || "-"}</p>
-      <p><strong>Duration:</strong> ${workout.duration || "-"} min</p>
-      <p><strong>Calories:</strong> ${workout.calories || "-"}</p>
-      <button onclick="deleteWorkout('${workout._id}')">Delete</button>
-    `;
+    let content = `<h3>${workout.title}</h3>`;
+    
+    if (workout.type) content += `<p><strong>Type:</strong> ${workout.type}</p>`;
+    if (workout.duration) content += `<p><strong>Duration:</strong> ${workout.duration} min</p>`;
+    if (workout.calories) content += `<p><strong>Calories:</strong> ${workout.calories}</p>`;
+    if (workout.difficulty) content += `<p><strong>Difficulty:</strong> ${workout.difficulty}</p>`;
+    if (workout.notes) content += `<p><strong>Notes:</strong> ${workout.notes}</p>`;
 
+    if (isAuthenticated) {
+      content += `<button onclick="deleteWorkout('${workout._id}')">Delete</button>`;
+    }
+
+    card.innerHTML = content;
     container.appendChild(card);
   });
 }
 
-
-loadWorkouts();
+checkAuth();
 
 </script>
 

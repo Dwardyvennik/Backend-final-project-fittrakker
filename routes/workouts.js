@@ -1,6 +1,7 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
 const { getDB } = require("../database/mongo");
+const { isAuthenticated } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -35,9 +36,9 @@ router.get("/", async (req, res) => {
     res.status(200).json(workouts);
 
   } catch (error) {
-  console.error("Error in GET /workouts:", error); 
-  res.status(500).json({ error: "Server error" });
-}
+    console.error("Error in GET /workouts:", error); 
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 router.get("/:id", async (req, res) => {
@@ -58,11 +59,13 @@ router.get("/:id", async (req, res) => {
     res.status(400).json({ error: "Invalid ID" });
   }
 });
-router.post("/", async (req, res) => {
-  const { title, type, duration, calories, date } = req.body;
+
+// Protected Write Operations
+router.post("/", isAuthenticated, async (req, res) => {
+  const { title, type, duration, calories, date, difficulty, notes } = req.body;
 
   if (!title || !type || !duration) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields (title, type, duration)" });
   }
 
   try {
@@ -71,25 +74,33 @@ router.post("/", async (req, res) => {
     const result = await db.collection("workouts").insertOne({
       title,
       type,
-      duration,
-      calories,
-      date
+      duration: Number(duration),
+      calories: Number(calories) || 0,
+      date: date || new Date().toISOString().split('T')[0],
+      difficulty: difficulty || "Medium",
+      notes: notes || ""
     });
 
     res.status(201).json(result);
 
-  } catch {
+  } catch (err) {
+    console.error("Error creating workout:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", isAuthenticated, async (req, res) => {
   try {
     const db = getDB();
-
+    const updateData = { ...req.body };
+    
+    // Ensure numbers are numbers
+    if (updateData.duration) updateData.duration = Number(updateData.duration);
+    if (updateData.calories) updateData.calories = Number(updateData.calories);
+    
     const result = await db.collection("workouts").updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: req.body }
+      { $set: updateData }
     );
 
     if (result.matchedCount === 0) {
@@ -103,7 +114,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
     const db = getDB();
 

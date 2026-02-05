@@ -10,12 +10,11 @@
 <header class="navbar">
   <div class="nav-container">
     <div class="logo">FitTrack</div>
-    <ul class="nav-links">
+    <ul class="nav-links" id="nav-links">
       <li><a href="/">Home</a></li>
       <li><a href="/about">About</a></li>
       <li><a href="/contact">Contact</a></li>
-      <li><a href="/workouts">Workouts</a></li>
-
+      <!-- Dynamic links will be injected here -->
     </ul>
   </div>
 </header>
@@ -26,6 +25,7 @@
     <p>
       Track workouts, monitor progress, and build healthy habits with a simple fitness tracking platform.
     </p>
+    <div id="hero-actions" style="margin-top: 20px;"></div>
   </div>
 </section>
 
@@ -53,6 +53,56 @@
 <footer class="footer">
   <p>© 2025 FitTrack. Student Project.</p>
 </footer>
+
+<script>
+  async function checkAuth() {
+    try {
+      const res = await fetch("/api/auth/status");
+      const data = await res.json();
+      const nav = document.getElementById("nav-links");
+      const hero = document.getElementById("hero-actions");
+
+      if (data.isAuthenticated) {
+        // Nav
+        const workoutsLi = document.createElement("li");
+        workoutsLi.innerHTML = '<a href="/workouts">Workouts</a>';
+        nav.appendChild(workoutsLi);
+
+        const logoutLi = document.createElement("li");
+        logoutLi.innerHTML = '<a href="#" onclick="logout()">Logout</a>';
+        nav.appendChild(logoutLi);
+
+        // Hero
+        hero.innerHTML = '<a href="/workouts" class="back-home" style="background: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">Go to Dashboard</a>';
+
+      } else {
+        // Nav
+        const loginLi = document.createElement("li");
+        loginLi.innerHTML = '<a href="/login">Login</a>';
+        nav.appendChild(loginLi);
+
+        const registerLi = document.createElement("li");
+        registerLi.innerHTML = '<a href="/register">Register</a>';
+        nav.appendChild(registerLi);
+
+        // Hero
+        hero.innerHTML = `
+          <a href="/login" style="color: white; font-weight: bold; margin-right: 15px;">Login</a>
+          <a href="/register" style="color: white; font-weight: bold;">Register</a>
+        `;
+      }
+    } catch (e) {
+      console.error("Auth check failed", e);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.reload();
+  }
+
+  checkAuth();
+</script>
 
 </body>
 </html>

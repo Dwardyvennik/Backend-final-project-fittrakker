@@ -11,10 +11,10 @@
       margin-top: 15px;
     }
     .btn-cancel {
-      background-color: #6c757d; /* Серый цвет для отмены */
+      background-color: #6c757d; 
     }
     .btn-update {
-      background-color: #f59e0b; /* Оранжевый для кнопки Update в карточке */
+      background-color: #f59e0b; 
       color: white;
       border: none;
       padding: 5px 10px;
@@ -22,7 +22,7 @@
       border-radius: 4px;
     }
     .btn-delete {
-      background-color: #ef4444; /* Красный для кнопки Delete */
+      background-color: #ef4444; 
       color: white;
       border: none;
       padding: 5px 10px;
@@ -125,8 +125,23 @@
 
       <div id="login-prompt" style="display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
         <p>Please <a href="/login" style="color: #38bdf8;">Login</a> to create or manage workouts.</p>
+      
       </div>
+  <script>
+  async function checkAuth() {
+    const res = await fetch("/api/auth/me", {
+      credentials: "include"
+    });
 
+    const data = await res.json();
+
+    if (data.authenticated) {
+      document.getElementById("login-warning").style.display = "none";
+    }
+  }
+
+  checkAuth();
+</script>
 
       <section class="section">
 
@@ -181,12 +196,10 @@
 
 <script>
 
-// --- STATE MANAGEMENT ---
 let isAuthenticated = false;
-let currentEditId = null; // Если не null, значит мы в режиме редактирования
-let allWorkouts = [];     // Локальный кэш данных для быстрого заполнения формы
+let currentEditId = null; 
+let allWorkouts = [];     
 
-// --- AUTH CHECK ---
 async function checkAuth() {
   try {
     const res = await fetch("/api/auth/status");
@@ -198,7 +211,6 @@ async function checkAuth() {
       document.getElementById("create-section").style.display = "block";
       document.getElementById("login-prompt").style.display = "none";
       
-      // Добавляем Logout только если его еще нет
       if (!document.getElementById('logout-link')) {
         const logoutLi = document.createElement("li");
         logoutLi.id = "logout-link";
@@ -227,9 +239,7 @@ async function logout() {
   window.location.reload();
 }
 
-// --- FORM HANDLERS ---
 
-// Главная функция: решает, создавать или обновлять
 async function handleFormSubmit() {
   if (currentEditId) {
     await updateWorkout();
@@ -238,7 +248,6 @@ async function handleFormSubmit() {
   }
 }
 
-// Сбор данных из формы
 function getFormData() {
   const title = document.getElementById('titleInput').value;
   const type = document.getElementById('typeInput').value;
@@ -262,7 +271,6 @@ function getFormData() {
   };
 }
 
-// CREATE (POST)
 async function createWorkout() {
   const data = getFormData();
   if (!data) return;
@@ -279,7 +287,6 @@ async function createWorkout() {
   }
 }
 
-// UPDATE (PUT)
 async function updateWorkout() {
   const data = getFormData();
   if (!data) return;
@@ -296,7 +303,6 @@ async function updateWorkout() {
   }
 }
 
-// DELETE (DELETE)
 async function deleteWorkout(id) {
   if (!confirm("Delete this workout?")) return;
 
@@ -421,11 +427,14 @@ function handleResponse(res) {
   }
   return true;
 }
+fetch("/api/auth/me", {
+  credentials: "include"
+});//changes last
 
-// Запуск при загрузке
 checkAuth();
 
 </script>
+
 
 </body>
 </html>

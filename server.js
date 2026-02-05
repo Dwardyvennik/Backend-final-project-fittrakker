@@ -10,7 +10,7 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.set("trust proxy", 1);ьг
+app.set("trust proxy", 1);
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));

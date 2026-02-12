@@ -4,37 +4,6 @@
   <meta charset="UTF-8">
   <title>Workout Manager — FitTrack</title>
   <link rel="stylesheet" href="/styles.css">
-  <style>
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-    .btn-cancel {
-      background-color: #6c757d; 
-    }
-    .btn-update {
-      background-color: #f59e0b; 
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .btn-delete {
-      background-color: #ef4444; 
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .card-actions {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-    }
-  </style>
 </head>
 <body>
 
@@ -65,6 +34,7 @@
 
   <div class="dashboard-layout">
 
+    <!-- SIDEBAR -->
     <aside class="dashboard-sidebar">
 
       <h3>Quick Info</h3>
@@ -86,11 +56,13 @@
     </aside>
 
 
+    <!-- CONTENT -->
     <div class="dashboard-content">
 
+      <!-- CREATE (Protected) -->
       <section class="section" id="create-section" style="display: none;">
 
-        <h2 id="formTitle">Create New Workout</h2>
+        <h2>Create New Workout</h2>
 
         <div class="form-grid">
 
@@ -116,33 +88,16 @@
 
         </div>
 
-        <div class="btn-group">
-          <button id="submitBtn" onclick="handleFormSubmit()">Add Workout</button>
-          <button id="cancelBtn" class="btn-cancel" onclick="resetForm()" style="display: none;">Cancel</button>
-        </div>
+        <button onclick="createWorkout()">Add Workout</button>
 
       </section>
 
       <div id="login-prompt" style="display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
         <p>Please <a href="/login" style="color: #38bdf8;">Login</a> to create or manage workouts.</p>
-      
       </div>
-  <script>
-  async function checkAuth() {
-    const res = await fetch("/api/auth/me", {
-      credentials: "include"
-    });
 
-    const data = await res.json();
 
-    if (data.authenticated) {
-      document.getElementById("login-warning").style.display = "none";
-    }
-  }
-
-  checkAuth();
-</script>
-
+      <!-- FILTERS -->
       <section class="section">
 
         <h2>Filters & Sorting</h2>
@@ -174,6 +129,7 @@
       </section>
 
 
+      <!-- LIST -->
       <section class="section">
 
         <h2>Workout List</h2>
@@ -197,9 +153,8 @@
 <script>
 
 let isAuthenticated = false;
-let currentEditId = null; 
-let allWorkouts = [];     
 
+// Check Auth on Load
 async function checkAuth() {
   try {
     const res = await fetch("/api/auth/status");
@@ -211,22 +166,16 @@ async function checkAuth() {
       document.getElementById("create-section").style.display = "block";
       document.getElementById("login-prompt").style.display = "none";
       
-      if (!document.getElementById('logout-link')) {
-        const logoutLi = document.createElement("li");
-        logoutLi.id = "logout-link";
-        logoutLi.innerHTML = '<a href="#" onclick="logout()">Logout</a>';
-        nav.appendChild(logoutLi);
-      }
+      const logoutLi = document.createElement("li");
+      logoutLi.innerHTML = '<a href="#" onclick="logout()">Logout</a>';
+      nav.appendChild(logoutLi);
     } else {
       document.getElementById("create-section").style.display = "none";
       document.getElementById("login-prompt").style.display = "block";
 
-      if (!document.getElementById('login-link')) {
-        const loginLi = document.createElement("li");
-        loginLi.id = "login-link";
-        loginLi.innerHTML = '<a href="/login">Login</a>';
-        nav.appendChild(loginLi);
-      }
+      const loginLi = document.createElement("li");
+      loginLi.innerHTML = '<a href="/login">Login</a>';
+      nav.appendChild(loginLi);
     }
   } catch (e) {
     console.error("Auth check failed", e);
@@ -239,146 +188,85 @@ async function logout() {
   window.location.reload();
 }
 
+// CREATE
+async function createWorkout() {
 
-async function handleFormSubmit() {
-  if (currentEditId) {
-    await updateWorkout();
-  } else {
-    await createWorkout();
-  }
-}
-
-function getFormData() {
-  const title = document.getElementById('titleInput').value;
-  const type = document.getElementById('typeInput').value;
-  const duration = document.getElementById('durationInput').value;
-  const calories = document.getElementById('caloriesInput').value;
-  const difficulty = document.getElementById('difficultyInput').value;
-  const notes = document.getElementById('notesInput').value;
+  const title = titleInput.value;
+  const type = typeInput.value;
+  const duration = durationInput.value;
+  const calories = caloriesInput.value;
+  const difficulty = difficultyInput.value;
+  const notes = notesInput.value;
 
   if (!title || !duration) {
     alert("Title and duration are required");
-    return null;
+    return;
   }
-
-  return {
-    title,
-    type,
-    duration: Number(duration),
-    calories: Number(calories),
-    difficulty,
-    notes
-  };
-}
-
-async function createWorkout() {
-  const data = getFormData();
-  if (!data) return;
 
   const res = await fetch("/api/workouts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify({
+      title,
+      type,
+      duration: Number(duration),
+      calories: Number(calories),
+      difficulty,
+      notes
+    })
   });
 
-  if (handleResponse(res)) {
-    resetForm();
+  if (res.status === 401) {
+    alert("Unauthorized. Please login.");
+    window.location.href = "/login";
+    return;
+  }
+
+  if (res.ok) {
+    titleInput.value = "";
+    durationInput.value = "";
+    caloriesInput.value = "";
+    notesInput.value = "";
     loadWorkouts();
+  } else {
+    alert("Error creating workout");
   }
 }
 
-async function updateWorkout() {
-  const data = getFormData();
-  if (!data) return;
 
-  const res = await fetch(`/api/workouts/${currentEditId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
-
-  if (handleResponse(res)) {
-    resetForm();
-    loadWorkouts();
-  }
-}
-
+// DELETE
 async function deleteWorkout(id) {
+
   if (!confirm("Delete this workout?")) return;
 
   const res = await fetch(`/api/workouts/${id}`, {
     method: "DELETE"
   });
 
-  if (handleResponse(res)) {
-    // Если удалили то, что сейчас редактировали — сбрасываем форму
-    if (currentEditId === id) resetForm();
-    loadWorkouts();
+  if (res.status === 401) {
+    alert("Unauthorized. Please login.");
+    return;
   }
-}
 
-// --- EDITING LOGIC ---
-
-// Запуск редактирования (вызывается кнопкой Update в карточке)
-function startEdit(id) {
-  const workout = allWorkouts.find(w => w._id === id);
-  if (!workout) return;
-
-  currentEditId = id;
-
-  // Заполняем поля
-  document.getElementById('titleInput').value = workout.title || "";
-  document.getElementById('typeInput').value = workout.type || "strength";
-  document.getElementById('durationInput').value = workout.duration || "";
-  document.getElementById('caloriesInput').value = workout.calories || "";
-  document.getElementById('difficultyInput').value = workout.difficulty || "Medium";
-  document.getElementById('notesInput').value = workout.notes || "";
-
-  // Меняем интерфейс
-  document.getElementById('formTitle').innerText = "Edit Workout";
-  document.getElementById('submitBtn').innerText = "Save Changes";
-  document.getElementById('cancelBtn').style.display = "block";
-
-  // Скролл наверх
-  document.getElementById('create-section').scrollIntoView({ behavior: "smooth" });
-}
-
-// Сброс формы
-function resetForm() {
-  currentEditId = null;
-  
-  // Очистка полей
-  document.getElementById('titleInput').value = "";
-  document.getElementById('durationInput').value = "";
-  document.getElementById('caloriesInput').value = "";
-  document.getElementById('notesInput').value = "";
-  document.getElementById('typeInput').value = "strength";
-  document.getElementById('difficultyInput').value = "Medium";
-
-  // Возврат интерфейса в исходное состояние
-  document.getElementById('formTitle').innerText = "Create New Workout";
-  document.getElementById('submitBtn').innerText = "Add Workout";
-  document.getElementById('cancelBtn').style.display = "none";
+  loadWorkouts();
 }
 
 
-// --- LOADING DATA ---
-
+// LOAD DATA
 async function loadWorkouts() {
-  const type = document.getElementById('typeFilter').value;
-  const sort = document.getElementById('sortSelect').value;
-  const projection = document.getElementById('projectionCheck').checked;
+
+  const type = typeFilter.value;
+  const sort = sortSelect.value;
+  const projection = projectionCheck.checked;
 
   let url = "/api/workouts?";
+
   if (type) url += `type=${type}&`;
   if (sort) url += `sort=${sort}&`;
   if (projection) url += "fields=title,duration";
 
   const res = await fetch(url);
   const data = await res.json();
-  
-  // Сохраняем в глобальную переменную для использования в startEdit
-  allWorkouts = data;
 
   const container = document.getElementById("workoutsList");
   container.innerHTML = "";
@@ -389,6 +277,7 @@ async function loadWorkouts() {
   }
 
   data.forEach(workout => {
+
     const card = document.createElement("div");
     card.className = "workout-card";
 
@@ -400,14 +289,8 @@ async function loadWorkouts() {
     if (workout.difficulty) content += `<p><strong>Difficulty:</strong> ${workout.difficulty}</p>`;
     if (workout.notes) content += `<p><strong>Notes:</strong> ${workout.notes}</p>`;
 
-    // Кнопки действий (только если авторизован)
     if (isAuthenticated) {
-      content += `
-        <div class="card-actions">
-          <button class="btn-update" onclick="startEdit('${workout._id}')">Update</button>
-          <button class="btn-delete" onclick="deleteWorkout('${workout._id}')">Delete</button>
-        </div>
-      `;
+      content += `<button onclick="deleteWorkout('${workout._id}')">Delete</button>`;
     }
 
     card.innerHTML = content;
@@ -415,26 +298,9 @@ async function loadWorkouts() {
   });
 }
 
-function handleResponse(res) {
-  if (res.status === 401) {
-    alert("Unauthorized. Please login.");
-    window.location.href = "/login";
-    return false;
-  }
-  if (!res.ok) {
-    alert("Error processing request");
-    return false;
-  }
-  return true;
-}
-fetch("/api/auth/me", {
-  credentials: "include"
-});//changes last
-
 checkAuth();
 
 </script>
-
 
 </body>
 </html>

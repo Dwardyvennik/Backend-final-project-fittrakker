@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultations - FitTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="navbar">
+  <div class="nav-container">
+    <div class="logo">FitTrack</div>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/workouts">Workouts</a></li>
+      <li><a href="/consultations" class="active-link">Consultations</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/contact">Contact</a></li>
+    </ul>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>Book Trainer / Consultant</h1>
+    <p>Leave your phone number, choose trainer or online consultant, and set date and time.</p>
+    <div class="hero-actions"><span id="role-banner" class="muted"></span></div>
+  </div>
+</section>
+
+<main class="main-content">
+  <div id="global-message" class="message"></div>
+
+  <section id="auth-required" class="section" hidden>
+    <h2>Login Required</h2>
+    <p>You need to login before booking consultation.</p>
+    <a class="btn btn-primary" href="/login">Open Login</a>
+  </section>
+
+  <section id="booking-section" class="section" hidden>
+    <h2>Book Consultation</h2>
+    <div class="form-grid">
+      <select id="consultantSelect"></select>
+      <select id="modeSelect">
+        <option value="online">Online</option>
+        <option value="offline">Offline</option>
+      </select>
+      <input type="tel" id="phoneInput" placeholder="Phone number (e.g. +7 777 123 45 67)">
+      <input type="datetime-local" id="scheduledInput">
+      <input type="text" id="notesInput" placeholder="Notes (optional)">
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="btn btn-primary" id="bookBtn">Book</button>
+      <span class="muted">Consultation must be scheduled in the future.</span>
+    </div>
+  </section>
+
+  <section id="my-consultations" class="section" hidden>
+    <h2>My Consultation Requests</h2>
+    <div id="consultationsList" class="cards-grid"></div>
+  </section>
+</main>
+
+<footer class="footer">2026 FitTrack</footer>
+
+<script>
+  const state = {
+    isAuthenticated: false,
+    role: null,
+    consultants: []
+  };
+
+  const el = {
+    roleBanner: document.getElementById("role-banner"),
+    globalMessage: document.getElementById("global-message"),
+    authRequired: document.getElementById("auth-required"),
+    bookingSection: document.getElementById("booking-section"),
+    myConsultations: document.getElementById("my-consultations"),
+    consultantSelect: document.getElementById("consultantSelect"),
+    modeSelect: document.getElementById("modeSelect"),
+    phoneInput: document.getElementById("phoneInput"),
+    scheduledInput: document.getElementById("scheduledInput"),
+    notesInput: document.getElementById("notesInput"),
+    consultationsList: document.getElementById("consultationsList"),
+    bookBtn: document.getElementById("bookBtn")
+  };
+
+  function showMessage(text, type) {
+    el.globalMessage.className = `message message-${type} show`;
+    el.globalMessage.textContent = text;
+  }
+
+  function clearMessage() {
+    el.globalMessage.className = "message";
+    el.globalMessage.textContent = "";
+  }
+
+  async function parseResponse(response) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return response.json();
+    }
+    return { error: "Unexpected response" };
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function formatDateTime(value) {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "-";
+    return d.toLocaleString();
+  }
+
+  function renderConsultants() {
+    el.consultantSelect.innerHTML = "";
+    for (const consultant of state.consultants) {
+      const opt = document.createElement("option");
+      opt.value = consultant.id;
+      opt.textContent = `${consultant.name} (${consultant.role}) - ${consultant.specialty}`;
+      el.consultantSelect.appendChild(opt);
+    }
+    syncModeOptions();
+  }
+
+  function syncModeOptions() {
+    const consultant = state.consultants.find((item) => item.id === el.consultantSelect.value);
+    if (!consultant) return;
+
+    el.modeSelect.innerHTML = "";
+    for (const mode of consultant.modes) {
+      const opt = document.createElement("option");
+      opt.value = mode;
+      opt.textContent = mode === "online" ? "Online" : "Offline";
+      el.modeSelect.appendChild(opt);
+    }
+  }
+
+  async function loadConsultants() {
+    const res = await fetch("/api/consultations/consultants");
+    const data = await parseResponse(res);
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to load consultants");
+    }
+    state.consultants = Array.isArray(data.items) ? data.items : [];
+    renderConsultants();
+  }
+
+  async function loadMyConsultations() {
+    const scope = state.role === "admin" ? "all" : "mine";
+    const res = await fetch(`/api/consultations/my?scope=${encodeURIComponent(scope)}`);
+    const data = await parseResponse(res);
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to load consultations");
+    }
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    el.consultationsList.innerHTML = "";
+
+    if (items.length === 0) {
+      el.consultationsList.innerHTML = '<div class="info-card"><p class="muted">No consultation requests yet.</p></div>';
+      return;
+    }
+
+    for (const item of items) {
+      const card = document.createElement("article");
+      card.className = "workout-card";
+      card.innerHTML = `
+        <h3>${escapeHtml(item.consultantName)}</h3>
+        <p class="muted"><strong>Role:</strong> ${escapeHtml(item.consultantRole)}</p>
+        <p class="muted"><strong>Specialty:</strong> ${escapeHtml(item.specialty)}</p>
+        <p class="muted"><strong>Mode:</strong> ${escapeHtml(item.mode)}</p>
+        <p class="muted"><strong>Phone:</strong> ${escapeHtml(item.phone)}</p>
+        <p class="muted"><strong>Schedule:</strong> ${escapeHtml(formatDateTime(item.scheduledAt))}</p>
+        <p class="muted"><strong>Status:</strong> ${escapeHtml(item.status)}</p>
+        <p class="muted"><strong>Client:</strong> ${escapeHtml(item.ownerUsername || "-")}</p>
+        <p class="muted"><strong>Notes:</strong> ${escapeHtml(item.notes || "-")}</p>
+      `;
+
+      if (item.status === "pending" || item.status === "approved") {
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "btn btn-danger";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", () => updateStatus(item._id, "cancelled"));
+
+        actions.appendChild(cancelBtn);
+
+        if (state.role === "admin") {
+          const approveBtn = document.createElement("button");
+          approveBtn.type = "button";
+          approveBtn.className = "btn btn-primary";
+          approveBtn.textContent = "Approve";
+          approveBtn.addEventListener("click", () => updateStatus(item._id, "approved"));
+
+          const completeBtn = document.createElement("button");
+          completeBtn.type = "button";
+          completeBtn.className = "btn btn-secondary";
+          completeBtn.textContent = "Completed";
+          completeBtn.addEventListener("click", () => updateStatus(item._id, "completed"));
+
+          actions.append(approveBtn, completeBtn);
+        }
+
+        card.appendChild(actions);
+      }
+
+      el.consultationsList.appendChild(card);
+    }
+  }
+
+  async function updateStatus(id, action) {
+    clearMessage();
+    const res = await fetch(`/api/consultations/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action })
+    });
+    const data = await parseResponse(res);
+    if (!res.ok) {
+      showMessage(data.error || "Failed to update status", "error");
+      return;
+    }
+    showMessage(data.message || "Status updated", "success");
+    await loadMyConsultations();
+  }
+
+  async function createConsultation() {
+    clearMessage();
+
+    const payload = {
+      consultantId: el.consultantSelect.value,
+      mode: el.modeSelect.value,
+      phone: el.phoneInput.value.trim(),
+      scheduledAt: el.scheduledInput.value,
+      notes: el.notesInput.value.trim()
+    };
+
+    if (!payload.consultantId || !payload.mode || !payload.phone || !payload.scheduledAt) {
+      showMessage("Please fill consultant, mode, phone and date/time.", "error");
+      return;
+    }
+
+    el.bookBtn.disabled = true;
+
+    try {
+      const res = await fetch("/api/consultations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        showMessage(data.error || "Booking failed", "error");
+        return;
+      }
+
+      showMessage("Consultation booked successfully.", "success");
+      el.phoneInput.value = "";
+      el.scheduledInput.value = "";
+      el.notesInput.value = "";
+      await loadMyConsultations();
+    } catch (error) {
+      showMessage("Network error while booking consultation.", "error");
+    } finally {
+      el.bookBtn.disabled = false;
+    }
+  }
+
+  async function checkAuth() {
+    try {
+      const res = await fetch("/api/auth/status");
+      const data = await parseResponse(res);
+
+      state.isAuthenticated = Boolean(data.isAuthenticated);
+      state.role = data.role || null;
+
+      if (!state.isAuthenticated) {
+        el.roleBanner.textContent = "Guest mode";
+        el.authRequired.hidden = false;
+        el.bookingSection.hidden = true;
+        el.myConsultations.hidden = true;
+        return;
+      }
+
+      el.roleBanner.textContent = `Signed in as ${data.username || "user"} (${state.role || "user"})`;
+      el.authRequired.hidden = true;
+      el.bookingSection.hidden = false;
+      el.myConsultations.hidden = false;
+
+      await loadConsultants();
+      await loadMyConsultations();
+    } catch (error) {
+      showMessage("Failed to load authentication status.", "error");
+    }
+  }
+
+  el.consultantSelect.addEventListener("change", syncModeOptions);
+  el.bookBtn.addEventListener("click", createConsultation);
+
+  checkAuth();
+</script>
+</body>
+</html>

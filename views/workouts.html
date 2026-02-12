@@ -2,108 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Workout Manager — FitTrack</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Manager - FitTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-
 <header class="navbar">
   <div class="nav-container">
-
     <div class="logo">FitTrack</div>
-
     <ul class="nav-links" id="nav-links">
-      <li><a href="/">Dashboard</a></li>
+      <li><a href="/">Home</a></li>
       <li><a href="/workouts" class="active-link">Workouts</a></li>
+      <li><a href="/consultations">Consultations</a></li>
       <li><a href="/about">About</a></li>
       <li><a href="/contact">Contact</a></li>
     </ul>
-
   </div>
 </header>
 
 <section class="hero">
   <div class="hero-content">
-    <h1>Workout Manager</h1>
-    <p>Manage your training sessions with real-time MongoDB integration</p>
+    <h1>Workout Progress Manager</h1>
+    <p>Plan workouts by time, confirm completion, and track progress with history and statistics.</p>
+    <div class="hero-actions">
+      <span id="role-banner" class="muted"></span>
+    </div>
   </div>
 </section>
 
-
 <main class="main-content">
+  <div id="global-message" class="message"></div>
 
   <div class="dashboard-layout">
-
-    <!-- SIDEBAR -->
     <aside class="dashboard-sidebar">
-
-      <h3>Quick Info</h3>
-
+      <h3>Overview</h3>
       <div class="info-card">
-        <p><strong>Project:</strong> FitTrack</p>
-        <p><strong>Database:</strong> MongoDB</p>
-        <p><strong>API:</strong> REST</p>
+        <p><strong>Flow:</strong> plan -> reminder -> done/missed</p>
+        <p><strong>History:</strong> done + missed logs</p>
+        <p><strong>Progress:</strong> completion rate and streak</p>
       </div>
 
-      <h3>Tips</h3>
-
-      <div class="info-card">
-        <p>• Use filters to find workouts faster</p>
-        <p>• Sort by duration or calories</p>
-        <p>• Projection improves performance</p>
+      <h3>List Options</h3>
+      <div class="form-stack">
+        <label for="limitSelect">Page size</label>
+        <select id="limitSelect">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+        </select>
       </div>
 
+      <div id="admin-tools" class="info-card" hidden>
+        <h4>Admin Summary</h4>
+        <button class="btn btn-accent" id="load-summary-btn" type="button">Load Summary</button>
+        <pre id="admin-summary" class="muted"></pre>
+      </div>
     </aside>
 
-
-    <!-- CONTENT -->
-    <div class="dashboard-content">
-
-      <!-- CREATE (Protected) -->
-      <section class="section" id="create-section" style="display: none;">
-
-        <h2>Create New Workout</h2>
-
+    <section class="dashboard-content">
+      <article id="create-section" class="section" hidden>
+        <h2>Schedule Workout</h2>
         <div class="form-grid">
-
-          <input type="text" id="titleInput" placeholder="Workout title">
-
+          <input type="text" id="titleInput" placeholder="Workout title" maxlength="60">
           <select id="typeInput">
             <option value="strength">Strength</option>
             <option value="cardio">Cardio</option>
             <option value="yoga">Yoga</option>
           </select>
-
-          <input type="number" id="durationInput" placeholder="Duration (min)">
-
-          <input type="number" id="caloriesInput" placeholder="Calories">
-
+          <input type="number" id="durationInput" placeholder="Duration (min)" min="1">
+          <input type="number" id="caloriesInput" placeholder="Calories" min="0">
           <select id="difficultyInput">
             <option value="Easy">Easy</option>
             <option value="Medium" selected>Medium</option>
             <option value="Hard">Hard</option>
           </select>
-
-          <input type="text" id="notesInput" placeholder="Notes (optional)">
-
+          <input type="datetime-local" id="scheduledAtInput">
+          <input type="text" id="notesInput" placeholder="Notes" maxlength="120">
         </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="create-btn" type="button">Add Workout</button>
+          <span class="muted">Set schedule time to receive confirmation prompts.</span>
+        </div>
+      </article>
 
-        <button onclick="createWorkout()">Add Workout</button>
+      <article id="login-prompt" class="section" hidden>
+        <h2>Authentication Required</h2>
+        <p>Please login to create and track your workouts.</p>
+        <a class="btn btn-primary" href="/login">Open Login</a>
+      </article>
 
-      </section>
+      <article class="section" id="due-section" hidden>
+        <h2>Due Confirmations</h2>
+        <p class="muted">Scheduled time passed. Did you finish these workouts?</p>
+        <div id="due-list" class="cards-grid"></div>
+      </article>
 
-      <div id="login-prompt" style="display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-        <p>Please <a href="/login" style="color: #38bdf8;">Login</a> to create or manage workouts.</p>
-      </div>
+      <article class="section">
+        <h2>Progress Stats</h2>
+        <div id="stats-grid" class="info-grid"></div>
+      </article>
 
-
-      <!-- FILTERS -->
-      <section class="section">
-
+      <article class="section">
         <h2>Filters & Sorting</h2>
-
         <div class="form-grid">
-
           <select id="typeFilter">
             <option value="">All Types</option>
             <option value="strength">Strength</option>
@@ -111,196 +115,661 @@
             <option value="yoga">Yoga</option>
           </select>
 
-          <select id="sortSelect">
-            <option value="">No Sorting</option>
-            <option value="duration">Sort by Duration</option>
-            <option value="calories">Sort by Calories</option>
+          <select id="statusFilter">
+            <option value="">All Statuses</option>
+            <option value="planned" selected>Planned</option>
+            <option value="done">Done</option>
+            <option value="missed">Missed</option>
           </select>
 
-          <label class="checkbox-row">
-            <input type="checkbox" id="projectionCheck">
-            Show only title + duration
-          </label>
+          <select id="sortSelect">
+            <option value="">No Sorting</option>
+            <option value="scheduledAt">Sort by Schedule</option>
+            <option value="duration">Sort by Duration</option>
+            <option value="calories">Sort by Calories</option>
+            <option value="date">Sort by Date</option>
+          </select>
 
+          <select id="orderSelect">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+
+          <label for="projectionCheck"><input type="checkbox" id="projectionCheck"> Minimal fields</label>
         </div>
+        <div class="hero-actions">
+          <button class="btn btn-secondary" id="apply-filter-btn" type="button">Apply Filters</button>
+          <button class="btn btn-secondary" id="reset-filter-btn" type="button">Reset</button>
+        </div>
+      </article>
 
-        <button onclick="loadWorkouts()">Apply Filters</button>
-
-      </section>
-
-
-      <!-- LIST -->
-      <section class="section">
-
+      <article class="section">
         <h2>Workout List</h2>
-
+        <p id="pagination-info" class="muted">Loading...</p>
         <div id="workoutsList" class="cards-grid"></div>
+        <div class="pagination-row">
+          <button class="btn btn-secondary" id="prevBtn" type="button">Previous</button>
+          <button class="btn btn-secondary" id="nextBtn" type="button">Next</button>
+        </div>
+      </article>
 
-      </section>
-
-    </div>
-
+      <article class="section">
+        <h2>History</h2>
+        <p class="muted">Recent completed/missed workouts.</p>
+        <div id="history-list" class="cards-grid"></div>
+      </article>
+    </section>
   </div>
-
 </main>
 
+<div class="modal" id="editModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Edit Workout</h2>
+      <button class="btn btn-secondary" id="closeEditBtn" type="button">Close</button>
+    </div>
 
-<footer class="footer">
-  © 2025 FitTrack
-</footer>
+    <div class="form-grid">
+      <input type="text" id="editTitle" placeholder="Title" maxlength="60">
+      <select id="editType">
+        <option value="strength">Strength</option>
+        <option value="cardio">Cardio</option>
+        <option value="yoga">Yoga</option>
+      </select>
+      <input type="number" id="editDuration" placeholder="Duration" min="1">
+      <input type="number" id="editCalories" placeholder="Calories" min="0">
+      <select id="editDifficulty">
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+      <input type="datetime-local" id="editScheduledAt">
+      <input type="text" id="editNotes" placeholder="Notes" maxlength="120">
+    </div>
 
+    <div id="edit-message" class="message"></div>
+
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="saveEditBtn" type="button">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">2026 FitTrack</footer>
 
 <script>
+  const state = {
+    isAuthenticated: false,
+    role: null,
+    currentPage: 1,
+    totalPages: 1,
+    editingId: null
+  };
 
-let isAuthenticated = false;
+  const el = {
+    navLinks: document.getElementById("nav-links"),
+    roleBanner: document.getElementById("role-banner"),
+    globalMessage: document.getElementById("global-message"),
+    createSection: document.getElementById("create-section"),
+    loginPrompt: document.getElementById("login-prompt"),
+    dueSection: document.getElementById("due-section"),
+    dueList: document.getElementById("due-list"),
+    statsGrid: document.getElementById("stats-grid"),
+    historyList: document.getElementById("history-list"),
+    adminTools: document.getElementById("admin-tools"),
+    summaryOutput: document.getElementById("admin-summary"),
+    workoutsList: document.getElementById("workoutsList"),
+    paginationInfo: document.getElementById("pagination-info"),
+    prevBtn: document.getElementById("prevBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    limitSelect: document.getElementById("limitSelect"),
+    typeFilter: document.getElementById("typeFilter"),
+    statusFilter: document.getElementById("statusFilter"),
+    sortSelect: document.getElementById("sortSelect"),
+    orderSelect: document.getElementById("orderSelect"),
+    projectionCheck: document.getElementById("projectionCheck"),
+    editModal: document.getElementById("editModal"),
+    editMessage: document.getElementById("edit-message")
+  };
 
-// Check Auth on Load
-async function checkAuth() {
-  try {
-    const res = await fetch("/api/auth/status");
-    const data = await res.json();
-    isAuthenticated = data.isAuthenticated;
-    const nav = document.getElementById("nav-links");
+  function showMessage(target, text, type) {
+    target.className = `message message-${type} show`;
+    target.textContent = text;
+  }
 
-    if (isAuthenticated) {
-      document.getElementById("create-section").style.display = "block";
-      document.getElementById("login-prompt").style.display = "none";
-      
-      const logoutLi = document.createElement("li");
-      logoutLi.innerHTML = '<a href="#" onclick="logout()">Logout</a>';
-      nav.appendChild(logoutLi);
-    } else {
-      document.getElementById("create-section").style.display = "none";
-      document.getElementById("login-prompt").style.display = "block";
+  function clearMessage(target) {
+    target.className = "message";
+    target.textContent = "";
+  }
 
-      const loginLi = document.createElement("li");
-      loginLi.innerHTML = '<a href="/login">Login</a>';
-      nav.appendChild(loginLi);
+  async function parseResponse(response) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return response.json();
     }
-  } catch (e) {
-    console.error("Auth check failed", e);
-  }
-  loadWorkouts();
-}
-
-async function logout() {
-  await fetch("/api/auth/logout", { method: "POST" });
-  window.location.reload();
-}
-
-// CREATE
-async function createWorkout() {
-
-  const title = titleInput.value;
-  const type = typeInput.value;
-  const duration = durationInput.value;
-  const calories = caloriesInput.value;
-  const difficulty = difficultyInput.value;
-  const notes = notesInput.value;
-
-  if (!title || !duration) {
-    alert("Title and duration are required");
-    return;
+    return { error: "Unexpected response format" };
   }
 
-  const res = await fetch("/api/workouts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      title,
-      type,
-      duration: Number(duration),
-      calories: Number(calories),
-      difficulty,
-      notes
-    })
-  });
-
-  if (res.status === 401) {
-    alert("Unauthorized. Please login.");
-    window.location.href = "/login";
-    return;
+  function appendLogout() {
+    const li = document.createElement("li");
+    const link = document.createElement("a");
+    link.href = "#";
+    link.textContent = "Logout";
+    link.addEventListener("click", async (event) => {
+      event.preventDefault();
+      clearWorkoutView("Signed out. Personal workouts are hidden.");
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    });
+    li.appendChild(link);
+    el.navLinks.appendChild(li);
   }
 
-  if (res.ok) {
-    titleInput.value = "";
-    durationInput.value = "";
-    caloriesInput.value = "";
-    notesInput.value = "";
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function formatDateTime(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleString();
+  }
+
+  function toLocalInputValue(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    const y = date.getFullYear();
+    const m = pad(date.getMonth() + 1);
+    const d = pad(date.getDate());
+    const h = pad(date.getHours());
+    const min = pad(date.getMinutes());
+    return `${y}-${m}-${d}T${h}:${min}`;
+  }
+
+  function clearWorkoutView(infoText) {
+    el.workoutsList.innerHTML = '<div class="info-card"><p class="muted">No workouts to display.</p></div>';
+    el.paginationInfo.textContent = infoText || "No data";
+    el.prevBtn.disabled = true;
+    el.nextBtn.disabled = true;
+    el.dueSection.hidden = true;
+    el.historyList.innerHTML = '<div class="info-card"><p class="muted">No history.</p></div>';
+    el.statsGrid.innerHTML = '<div class="info-card"><p class="muted">No stats available.</p></div>';
+  }
+
+  function resetFilters() {
+    state.currentPage = 1;
+    el.typeFilter.value = "";
+    el.statusFilter.value = "planned";
+    el.sortSelect.value = "";
+    el.orderSelect.value = "asc";
+    el.projectionCheck.checked = false;
     loadWorkouts();
-  } else {
-    alert("Error creating workout");
-  }
-}
-
-
-// DELETE
-async function deleteWorkout(id) {
-
-  if (!confirm("Delete this workout?")) return;
-
-  const res = await fetch(`/api/workouts/${id}`, {
-    method: "DELETE"
-  });
-
-  if (res.status === 401) {
-    alert("Unauthorized. Please login.");
-    return;
   }
 
-  loadWorkouts();
-}
-
-
-// LOAD DATA
-async function loadWorkouts() {
-
-  const type = typeFilter.value;
-  const sort = sortSelect.value;
-  const projection = projectionCheck.checked;
-
-  let url = "/api/workouts?";
-
-  if (type) url += `type=${type}&`;
-  if (sort) url += `sort=${sort}&`;
-  if (projection) url += "fields=title,duration";
-
-  const res = await fetch(url);
-  const data = await res.json();
-
-  const container = document.getElementById("workoutsList");
-  container.innerHTML = "";
-
-  if (data.length === 0) {
-    container.innerHTML = "<p>No workouts found.</p>";
-    return;
+  function openEditModal(workout) {
+    state.editingId = workout._id;
+    document.getElementById("editTitle").value = workout.title || "";
+    document.getElementById("editType").value = workout.type || "strength";
+    document.getElementById("editDuration").value = workout.duration || "";
+    document.getElementById("editCalories").value = workout.calories ?? 0;
+    document.getElementById("editDifficulty").value = workout.difficulty || "Medium";
+    document.getElementById("editScheduledAt").value = toLocalInputValue(workout.scheduledAt);
+    document.getElementById("editNotes").value = workout.notes || "";
+    clearMessage(el.editMessage);
+    el.editModal.classList.add("open");
+    el.editModal.setAttribute("aria-hidden", "false");
   }
 
-  data.forEach(workout => {
+  function closeEditModal() {
+    state.editingId = null;
+    el.editModal.classList.remove("open");
+    el.editModal.setAttribute("aria-hidden", "true");
+  }
 
-    const card = document.createElement("div");
-    card.className = "workout-card";
+  async function checkAuth() {
+    try {
+      const res = await fetch("/api/auth/status");
+      const data = await parseResponse(res);
 
-    let content = `<h3>${workout.title}</h3>`;
-    
-    if (workout.type) content += `<p><strong>Type:</strong> ${workout.type}</p>`;
-    if (workout.duration) content += `<p><strong>Duration:</strong> ${workout.duration} min</p>`;
-    if (workout.calories) content += `<p><strong>Calories:</strong> ${workout.calories}</p>`;
-    if (workout.difficulty) content += `<p><strong>Difficulty:</strong> ${workout.difficulty}</p>`;
-    if (workout.notes) content += `<p><strong>Notes:</strong> ${workout.notes}</p>`;
+      state.isAuthenticated = Boolean(data.isAuthenticated);
+      state.role = data.role || null;
 
-    if (isAuthenticated) {
-      content += `<button onclick="deleteWorkout('${workout._id}')">Delete</button>`;
+      if (state.isAuthenticated) {
+        el.roleBanner.textContent = `Signed in as ${data.username || "user"} (${state.role || "user"})`;
+        el.createSection.hidden = false;
+        el.loginPrompt.hidden = true;
+        appendLogout();
+      } else {
+        el.roleBanner.textContent = "Guest mode: login required to view your personal workouts.";
+        el.createSection.hidden = true;
+        el.loginPrompt.hidden = false;
+      }
+
+      if (state.role === "admin") {
+        el.adminTools.hidden = false;
+      }
+    } catch (error) {
+      showMessage(el.globalMessage, "Failed to load auth state.", "error");
     }
 
-    card.innerHTML = content;
-    container.appendChild(card);
+    if (!state.isAuthenticated) {
+      clearWorkoutView("Please login to load personal workouts.");
+      return;
+    }
+
+    await Promise.all([loadWorkouts(), loadProgressStats(), loadHistory(), loadDueConfirmations()]);
+  }
+
+  async function createWorkout() {
+    clearMessage(el.globalMessage);
+
+    const payload = {
+      title: document.getElementById("titleInput").value.trim(),
+      type: document.getElementById("typeInput").value,
+      duration: Number(document.getElementById("durationInput").value),
+      calories: Number(document.getElementById("caloriesInput").value || 0),
+      difficulty: document.getElementById("difficultyInput").value,
+      scheduledAt: document.getElementById("scheduledAtInput").value || null,
+      notes: document.getElementById("notesInput").value.trim()
+    };
+
+    if (!payload.title || !payload.duration || Number.isNaN(payload.duration) || payload.duration <= 0) {
+      showMessage(el.globalMessage, "Title and positive duration are required.", "error");
+      return;
+    }
+
+    const button = document.getElementById("create-btn");
+    button.disabled = true;
+
+    try {
+      const res = await fetch("/api/workouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await parseResponse(res);
+
+      if (!res.ok) {
+        showMessage(el.globalMessage, data.error || "Failed to create workout.", "error");
+        return;
+      }
+
+      document.getElementById("titleInput").value = "";
+      document.getElementById("durationInput").value = "";
+      document.getElementById("caloriesInput").value = "";
+      document.getElementById("scheduledAtInput").value = "";
+      document.getElementById("notesInput").value = "";
+
+      showMessage(el.globalMessage, "Workout scheduled.", "success");
+      await Promise.all([loadWorkouts(), loadProgressStats(), loadHistory(), loadDueConfirmations()]);
+    } catch (error) {
+      showMessage(el.globalMessage, "Network error while creating workout.", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function saveEdit() {
+    if (!state.editingId) return;
+
+    const payload = {
+      title: document.getElementById("editTitle").value.trim(),
+      type: document.getElementById("editType").value,
+      duration: Number(document.getElementById("editDuration").value),
+      calories: Number(document.getElementById("editCalories").value || 0),
+      difficulty: document.getElementById("editDifficulty").value,
+      scheduledAt: document.getElementById("editScheduledAt").value || null,
+      notes: document.getElementById("editNotes").value.trim()
+    };
+
+    if (!payload.title || Number.isNaN(payload.duration) || payload.duration <= 0) {
+      showMessage(el.editMessage, "Title and positive duration are required.", "error");
+      return;
+    }
+
+    const saveBtn = document.getElementById("saveEditBtn");
+    saveBtn.disabled = true;
+
+    try {
+      const res = await fetch(`/api/workouts/${state.editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        showMessage(el.editMessage, data.error || "Update failed.", "error");
+        return;
+      }
+
+      closeEditModal();
+      showMessage(el.globalMessage, "Workout updated.", "success");
+      await Promise.all([loadWorkouts(), loadProgressStats(), loadHistory(), loadDueConfirmations()]);
+    } catch (error) {
+      showMessage(el.editMessage, "Network error while saving.", "error");
+    } finally {
+      saveBtn.disabled = false;
+    }
+  }
+
+  async function changeStatus(workoutId, action) {
+    try {
+      const res = await fetch(`/api/workouts/${workoutId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action })
+      });
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        showMessage(el.globalMessage, data.error || "Status update failed.", "error");
+        return;
+      }
+      showMessage(el.globalMessage, data.message || "Status updated.", "success");
+      await Promise.all([loadWorkouts(), loadProgressStats(), loadHistory(), loadDueConfirmations()]);
+    } catch (error) {
+      showMessage(el.globalMessage, "Network error while updating status.", "error");
+    }
+  }
+
+  async function deleteWorkout(workoutId) {
+    clearMessage(el.globalMessage);
+    if (!confirm("Delete this workout?")) return;
+
+    try {
+      const res = await fetch(`/api/workouts/${workoutId}`, { method: "DELETE" });
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        showMessage(el.globalMessage, data.error || "Delete failed.", "error");
+        return;
+      }
+      showMessage(el.globalMessage, "Workout deleted.", "success");
+      await Promise.all([loadWorkouts(), loadProgressStats(), loadHistory(), loadDueConfirmations()]);
+    } catch (error) {
+      showMessage(el.globalMessage, "Network error while deleting.", "error");
+    }
+  }
+
+  async function loadAdminSummary() {
+    el.summaryOutput.textContent = "Loading...";
+    try {
+      const res = await fetch("/api/workouts/admin/summary");
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        el.summaryOutput.textContent = data.error || "Failed to load summary.";
+        return;
+      }
+      el.summaryOutput.textContent = JSON.stringify(data, null, 2);
+    } catch (error) {
+      el.summaryOutput.textContent = "Network error while loading summary.";
+    }
+  }
+
+  async function loadDueConfirmations() {
+    try {
+      const params = new URLSearchParams({ status: "planned", sort: "scheduledAt", order: "asc", page: "1", limit: "50" });
+      const res = await fetch(`/api/workouts?${params.toString()}`);
+      const data = await parseResponse(res);
+      if (!res.ok) return;
+
+      const items = Array.isArray(data.items) ? data.items : [];
+      const dueItems = items.filter((item) => item.scheduledAt && new Date(item.scheduledAt).getTime() <= Date.now());
+
+      if (dueItems.length === 0) {
+        el.dueSection.hidden = true;
+        el.dueList.innerHTML = "";
+        return;
+      }
+
+      el.dueSection.hidden = false;
+      el.dueList.innerHTML = "";
+
+      for (const workout of dueItems) {
+        const card = document.createElement("article");
+        card.className = "workout-card";
+        card.innerHTML = `
+          <h3>${escapeHtml(workout.title)}</h3>
+          <p class="muted"><strong>Scheduled:</strong> ${escapeHtml(formatDateTime(workout.scheduledAt))}</p>
+          <p class="muted">Did you complete this workout?</p>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+
+        const yesBtn = document.createElement("button");
+        yesBtn.type = "button";
+        yesBtn.className = "btn btn-primary";
+        yesBtn.textContent = "Yes, done";
+        yesBtn.addEventListener("click", () => changeStatus(workout._id, "done"));
+
+        const noBtn = document.createElement("button");
+        noBtn.type = "button";
+        noBtn.className = "btn btn-danger";
+        noBtn.textContent = "No, missed";
+        noBtn.addEventListener("click", () => changeStatus(workout._id, "missed"));
+
+        actions.append(yesBtn, noBtn);
+        card.appendChild(actions);
+        el.dueList.appendChild(card);
+      }
+    } catch {
+      el.dueSection.hidden = true;
+    }
+  }
+
+  async function loadProgressStats() {
+    try {
+      const res = await fetch("/api/workouts/progress/stats");
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        return;
+      }
+
+      const cards = [
+        ["Total", data.totalWorkouts],
+        ["Done", data.done],
+        ["Missed", data.missed],
+        ["Planned", data.planned],
+        ["Completion Rate", `${data.completionRate}%`],
+        ["Weekly Done", data.weeklyDone],
+        ["Monthly Done", data.monthlyDone],
+        ["Streak", `${data.streakDays} day(s)`],
+        ["Duration Done", `${data.totalDurationDone} min`],
+        ["Calories Done", data.totalCaloriesDone]
+      ];
+
+      el.statsGrid.innerHTML = cards
+        .map(([label, value]) => `<article class="info-card"><h3>${escapeHtml(label)}</h3><p class="muted">${escapeHtml(value)}</p></article>`)
+        .join("");
+    } catch {
+      el.statsGrid.innerHTML = '<div class="info-card"><p class="muted">Could not load stats.</p></div>';
+    }
+  }
+
+  async function loadHistory() {
+    try {
+      const res = await fetch("/api/workouts/history/list?limit=20");
+      const data = await parseResponse(res);
+      if (!res.ok) {
+        return;
+      }
+
+      const items = Array.isArray(data.items) ? data.items : [];
+      if (items.length === 0) {
+        el.historyList.innerHTML = '<div class="info-card"><p class="muted">No history yet.</p></div>';
+        return;
+      }
+
+      el.historyList.innerHTML = "";
+      for (const workout of items) {
+        const card = document.createElement("article");
+        card.className = "workout-card";
+        card.innerHTML = `
+          <h3>${escapeHtml(workout.title || "Untitled")}</h3>
+          <p class="muted"><strong>Status:</strong> ${escapeHtml(workout.status || "-")}</p>
+          <p class="muted"><strong>Scheduled:</strong> ${escapeHtml(formatDateTime(workout.scheduledAt))}</p>
+          <p class="muted"><strong>Completed:</strong> ${escapeHtml(formatDateTime(workout.completedAt))}</p>
+          <p class="muted"><strong>Duration:</strong> ${escapeHtml(workout.duration ?? "-")} min</p>
+        `;
+        el.historyList.appendChild(card);
+      }
+    } catch {
+      el.historyList.innerHTML = '<div class="info-card"><p class="muted">Could not load history.</p></div>';
+    }
+  }
+
+  async function loadWorkouts() {
+    if (!state.isAuthenticated) {
+      clearWorkoutView("Please login to load personal workouts.");
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set("page", String(state.currentPage));
+    params.set("limit", String(Number(el.limitSelect.value)));
+
+    if (el.typeFilter.value) params.set("type", el.typeFilter.value);
+    if (el.statusFilter.value) {
+      params.set("status", el.statusFilter.value);
+    } else {
+      // Default behavior: show active planned items in main list.
+      params.set("status", "planned");
+    }
+    if (el.sortSelect.value) params.set("sort", el.sortSelect.value);
+    if (el.orderSelect.value) params.set("order", el.orderSelect.value);
+    if (el.projectionCheck.checked) params.set("fields", "title,duration,status,scheduledAt");
+
+    try {
+      const res = await fetch(`/api/workouts?${params.toString()}`);
+      const data = await parseResponse(res);
+
+      if (!res.ok) {
+        showMessage(el.globalMessage, data.error || "Failed to load workouts.", "error");
+        return;
+      }
+
+      const items = Array.isArray(data.items) ? data.items : [];
+      const pagination = data.pagination || { page: 1, totalPages: 1, total: items.length };
+
+      state.currentPage = Number(pagination.page) || 1;
+      state.totalPages = Number(pagination.totalPages) || 1;
+
+      el.paginationInfo.textContent = `Page ${state.currentPage} of ${state.totalPages} | Total ${pagination.total || 0}`;
+      el.prevBtn.disabled = state.currentPage <= 1;
+      el.nextBtn.disabled = state.currentPage >= state.totalPages;
+
+      el.workoutsList.innerHTML = "";
+      if (items.length === 0) {
+        el.workoutsList.innerHTML = '<div class="info-card"><p class="muted">No workouts found.</p></div>';
+        return;
+      }
+
+      for (const workout of items) {
+        const card = document.createElement("article");
+        card.className = "workout-card";
+
+        card.innerHTML = `
+          <h3>${escapeHtml(workout.title || "Untitled")}</h3>
+          <p class="muted"><strong>Status:</strong> ${escapeHtml(workout.status || "planned")}</p>
+          <p class="muted"><strong>Scheduled:</strong> ${escapeHtml(formatDateTime(workout.scheduledAt))}</p>
+          <p class="muted"><strong>Completed:</strong> ${escapeHtml(formatDateTime(workout.completedAt))}</p>
+          <p class="muted"><strong>Type:</strong> ${escapeHtml(workout.type || "-")}</p>
+          <p class="muted"><strong>Duration:</strong> ${escapeHtml(workout.duration ?? "-")} min</p>
+          <p class="muted"><strong>Calories:</strong> ${escapeHtml(workout.calories ?? "-")}</p>
+          <p class="muted"><strong>Difficulty:</strong> ${escapeHtml(workout.difficulty || "-")}</p>
+          <p class="muted"><strong>Date:</strong> ${escapeHtml(workout.date || "-")}</p>
+          <p class="muted"><strong>Owner:</strong> ${escapeHtml(workout.ownerUsername || "-")}</p>
+          <p class="muted"><strong>Notes:</strong> ${escapeHtml(workout.notes || "-")}</p>
+        `;
+
+        if (workout.canManage) {
+          const actions = document.createElement("div");
+          actions.className = "card-actions";
+
+          const doneBtn = document.createElement("button");
+          doneBtn.type = "button";
+          doneBtn.className = "btn btn-primary";
+          doneBtn.textContent = "Mark Done";
+          doneBtn.addEventListener("click", () => changeStatus(workout._id, "done"));
+
+          const missedBtn = document.createElement("button");
+          missedBtn.type = "button";
+          missedBtn.className = "btn btn-danger";
+          missedBtn.textContent = "Mark Missed";
+          missedBtn.addEventListener("click", () => changeStatus(workout._id, "missed"));
+
+          const plannedBtn = document.createElement("button");
+          plannedBtn.type = "button";
+          plannedBtn.className = "btn btn-secondary";
+          plannedBtn.textContent = "Mark Planned";
+          plannedBtn.addEventListener("click", () => changeStatus(workout._id, "planned"));
+
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "btn btn-secondary";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", () => openEditModal(workout));
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "btn btn-danger";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", () => deleteWorkout(workout._id));
+
+          actions.append(doneBtn, missedBtn, plannedBtn, editBtn, deleteBtn);
+          card.appendChild(actions);
+        }
+
+        el.workoutsList.appendChild(card);
+      }
+    } catch (error) {
+      showMessage(el.globalMessage, "Network error while loading workouts.", "error");
+    }
+  }
+
+  document.getElementById("create-btn").addEventListener("click", createWorkout);
+  document.getElementById("apply-filter-btn").addEventListener("click", () => {
+    state.currentPage = 1;
+    loadWorkouts();
   });
-}
+  document.getElementById("reset-filter-btn").addEventListener("click", resetFilters);
+  document.getElementById("limitSelect").addEventListener("change", () => {
+    state.currentPage = 1;
+    loadWorkouts();
+  });
 
-checkAuth();
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (state.currentPage > 1) {
+      state.currentPage -= 1;
+      loadWorkouts();
+    }
+  });
 
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (state.currentPage < state.totalPages) {
+      state.currentPage += 1;
+      loadWorkouts();
+    }
+  });
+
+  document.getElementById("closeEditBtn").addEventListener("click", closeEditModal);
+  document.getElementById("saveEditBtn").addEventListener("click", saveEdit);
+  document.getElementById("load-summary-btn").addEventListener("click", loadAdminSummary);
+
+  el.editModal.addEventListener("click", (event) => {
+    if (event.target === el.editModal) closeEditModal();
+  });
+
+  checkAuth();
 </script>
-
 </body>
 </html>

@@ -2,107 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FitTrack — Fitness Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitTrack - Fitness Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-
 <header class="navbar">
   <div class="nav-container">
     <div class="logo">FitTrack</div>
     <ul class="nav-links" id="nav-links">
-      <li><a href="/">Home</a></li>
+      <li><a class="active-link" href="/">Home</a></li>
+      <li><a href="/consultations">Consultations</a></li>
       <li><a href="/about">About</a></li>
       <li><a href="/contact">Contact</a></li>
-      <!-- Dynamic links will be injected here -->
     </ul>
   </div>
 </header>
 
 <section class="hero">
   <div class="hero-content">
-    <h1>FitTrack</h1>
-    <p>
-      Track workouts, monitor progress, and build healthy habits with a simple fitness tracking platform.
-    </p>
-    <div id="hero-actions" style="margin-top: 20px;"></div>
+    <h1>Build Consistency, Not Just Workouts</h1>
+    <p>Track sessions, manage progress, and keep your training history clear with secure personal access.</p>
+    <div class="hero-actions" id="hero-actions"></div>
   </div>
 </section>
 
 <main class="main-content">
-
   <section class="section">
-    <h2>About FitTrack</h2>
-    <p>
-      FitTrack is a fitness tracking web application built with Node.js, Express, and MongoDB.
-      It helps users manage workouts and analyze training progress.
-    </p>
+    <h2>What You Can Do</h2>
+    <div class="info-grid">
+      <article class="info-card">
+        <h3>Personal Workspace</h3>
+        <p class="muted">Each user sees only their own workouts. Admin can review all records.</p>
+      </article>
+      <article class="info-card">
+        <h3>CRUD + Filters</h3>
+        <p class="muted">Create, edit, delete workouts with filtering, sorting and projection support.</p>
+      </article>
+      <article class="info-card">
+        <h3>Secure Sessions</h3>
+        <p class="muted">Session-based authentication with role-aware access checks.</p>
+      </article>
+    </div>
   </section>
 
   <section class="section">
-    <h2>API Testing</h2>
-    <p>Use the link below to test the backend API:</p>
-
-    <ul>
-      <li><a href="/api/workouts">Get All Workouts</a></li>
+    <h2>Quick API Links</h2>
+    <ul class="features-list">
+      <li><a href="/api/auth/status">Authentication Status</a></li>
+      <li><a href="/api/workouts?page=1&limit=10">Workouts (paginated)</a></li>
+      <li><a href="/api/workouts?sort=duration&order=desc&page=1&limit=5">Workouts (sorted)</a></li>
     </ul>
   </section>
 
+  <section class="section">
+    <h2>Guides</h2>
+    <p class="muted">How can you lose weight in a healthy way? Here are practical beginner-friendly tips.</p>
+    <div class="cards-grid">
+      <article class="workout-card">
+        <img class="guide-image" src="/images/photo_2025-05-16_16-27-20.jpg" alt="Balanced nutrition">
+        <h3>1) Improve Nutrition Quality</h3>
+        <p class="muted">Build meals around protein, vegetables, and whole carbs. Reduce sugar, fast food, and random snacking. Small daily improvements are more sustainable than strict crash diets.</p>
+      </article>
+      <article class="workout-card">
+        <img class="guide-image" src="/images/photo_2025-05-27_23-30-31.jpg" alt="Regular workouts">
+        <h3>2) Train Consistently Every Week</h3>
+        <p class="muted">Aim for 3-4 sessions per week (30-45 minutes). Combine cardio for calorie burn and strength training to preserve muscle and keep metabolism strong.</p>
+      </article>
+      <article class="workout-card">
+        <img class="guide-image" src="/images/photo_2025-10-09_17-52-47.jpg" alt="Progress tracking">
+        <h3>3) Track Progress Correctly</h3>
+        <p class="muted">Do not check weight too often. Measure once per week, track workouts, and monitor body measurements. Progress is not only scale weight, but also energy and consistency.</p>
+      </article>
+      <article class="workout-card">
+        <img class="guide-image" src="https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=900&q=80" alt="Recovery and sleep">
+        <h3>4) Sleep, Recovery, and Stress Control</h3>
+        <p class="muted">Get 7-8 hours of sleep, drink enough water, and manage stress. Recovery quality directly affects appetite, motivation, and long-term fat-loss results.</p>
+      </article>
+    </div>
+  </section>
 </main>
 
-<footer class="footer">
-  <p>© 2025 FitTrack. Student Project.</p>
-</footer>
+<footer class="footer">2026 FitTrack. Full-stack student project.</footer>
 
 <script>
-  async function checkAuth() {
-    try {
-      const res = await fetch("/api/auth/status");
-      const data = await res.json();
-      const nav = document.getElementById("nav-links");
-      const hero = document.getElementById("hero-actions");
+  function appendNavLink(parent, href, label, onClick) {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = href;
+    a.textContent = label;
 
-      if (data.isAuthenticated) {
-        // Nav
-        const workoutsLi = document.createElement("li");
-        workoutsLi.innerHTML = '<a href="/workouts">Workouts</a>';
-        nav.appendChild(workoutsLi);
-
-        const logoutLi = document.createElement("li");
-        logoutLi.innerHTML = '<a href="#" onclick="logout()">Logout</a>';
-        nav.appendChild(logoutLi);
-
-        // Hero
-        hero.innerHTML = '<a href="/workouts" class="back-home" style="background: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">Go to Dashboard</a>';
-
-      } else {
-        // Nav
-        const loginLi = document.createElement("li");
-        loginLi.innerHTML = '<a href="/login">Login</a>';
-        nav.appendChild(loginLi);
-
-        const registerLi = document.createElement("li");
-        registerLi.innerHTML = '<a href="/register">Register</a>';
-        nav.appendChild(registerLi);
-
-        // Hero
-        hero.innerHTML = `
-          <a href="/login" style="color: white; font-weight: bold; margin-right: 15px;">Login</a>
-          <a href="/register" style="color: white; font-weight: bold;">Register</a>
-        `;
-      }
-    } catch (e) {
-      console.error("Auth check failed", e);
+    if (onClick) {
+      a.addEventListener("click", onClick);
     }
+
+    li.appendChild(a);
+    parent.appendChild(li);
   }
 
-  async function logout() {
+  function setHeroActions(html) {
+    const container = document.getElementById("hero-actions");
+    container.innerHTML = html;
+  }
+
+  async function logout(event) {
+    event.preventDefault();
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.reload();
   }
 
+  async function checkAuth() {
+    const nav = document.getElementById("nav-links");
+
+    try {
+      const res = await fetch("/api/auth/status");
+      const data = await res.json();
+
+      if (data.isAuthenticated) {
+        appendNavLink(nav, "/workouts", "Workouts");
+        appendNavLink(nav, "#", "Logout", logout);
+
+        setHeroActions(`
+          <a class="btn btn-primary" href="/workouts">Open Dashboard</a>
+          <span class="muted">Signed in as <strong>${String(data.username || "user")}</strong> (${String(data.role || "user")})</span>
+        `);
+      } else {
+        appendNavLink(nav, "/login", "Login");
+        appendNavLink(nav, "/register", "Register");
+
+        setHeroActions(`
+          <a class="btn btn-primary" href="/register">Create Account</a>
+          <a class="btn btn-secondary" href="/login">Login</a>
+        `);
+      }
+    } catch (error) {
+      console.error("Auth check failed", error);
+      setHeroActions('<span class="message message-error show">Failed to load auth status. Try refresh.</span>');
+    }
+  }
+
   checkAuth();
 </script>
-
 </body>
 </html>

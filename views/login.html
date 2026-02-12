@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - FitTrack</title>
+  <title>Login - FitTrack</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -15,25 +15,25 @@
     <div class="logo">FitTrack</div>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
-      <li><a href="/login">Login</a></li>
+      <li><a href="/register">Register</a></li>
     </ul>
   </div>
 </header>
 
 <section class="hero">
   <div class="hero-content">
-    <h1>Create Your Account</h1>
-    <p>First registered user receives admin role automatically.</p>
+    <h1>Welcome Back</h1>
+    <p>Login to manage your workouts and continue your training timeline.</p>
   </div>
 </section>
 
 <main class="main-content">
   <section class="section form-shell">
-    <h2>Register</h2>
-    <form id="register-form" class="form-stack">
+    <h2>Login</h2>
+    <form id="login-form" class="form-stack">
       <input type="text" id="username" placeholder="Username" required>
-      <input type="password" id="password" placeholder="Password (min 6 chars)" minlength="6" required>
-      <button class="btn btn-primary" id="register-btn" type="submit">Create Account</button>
+      <input type="password" id="password" placeholder="Password" required>
+      <button class="btn btn-primary" id="login-btn" type="submit">Login</button>
       <div id="msg" class="message"></div>
     </form>
   </section>
@@ -42,9 +42,9 @@
 <footer class="footer">2026 FitTrack</footer>
 
 <script>
-  const form = document.getElementById("register-form");
+  const form = document.getElementById("login-form");
   const message = document.getElementById("msg");
-  const button = document.getElementById("register-btn");
+  const button = document.getElementById("login-btn");
 
   function showMessage(text, type) {
     message.className = `message message-${type} show`;
@@ -72,15 +72,10 @@
       return;
     }
 
-    if (password.length < 6) {
-      showMessage("Password must be at least 6 characters.", "error");
-      return;
-    }
-
     button.disabled = true;
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
@@ -89,14 +84,14 @@
       const data = await parseResponse(res);
 
       if (!res.ok) {
-        showMessage(data.error || "Registration failed.", "error");
+        showMessage(data.error || "Login failed.", "error");
         return;
       }
 
-      showMessage(`Registration successful. Assigned role: ${data.role || "user"}. Redirecting...`, "success");
+      showMessage("Login successful. Redirecting...", "success");
       setTimeout(() => {
-        window.location.href = "/login";
-      }, 700);
+        window.location.href = "/workouts";
+      }, 500);
     } catch (error) {
       showMessage("Network error. Try again.", "error");
     } finally {
